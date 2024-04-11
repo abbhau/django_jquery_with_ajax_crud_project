@@ -1,0 +1,107 @@
+<script>
+$(document).ready(function(){
+    var csrftoken = $('input[name=csrfmiddlewaretoken]').val();
+    $("#btnsave").click(function(){
+        var row =""
+        $('tbody').html(row)
+        let sid = $("#stuid").val()
+        let nm = $("#nameid").val()
+        let em = $("#emailid").val()
+        let pw = $("#passwordid").val()
+        if (nm==""){
+            console.log("plz enter name")
+        }else if(em==""){
+            console.log("plz enter email")
+        }else if(pw==""){
+            console.log("plz enter password")
+        }else{
+            let obj = {stuid:sid, name:nm, email:em, password:pw}
+            
+            $.ajax({
+                url:"{% url 'student_create_url' %}",
+                method :"POST",
+                data: obj,
+                beforeSend : function(xhr, settings){
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken)},
+                success:function(data){
+                    $("#msg").text(data.msg)
+                    $("#msg").show()
+                    $('form')[0].reset();
+                 $.ajax({
+                    url:"{% url 'student_retrieve_url' %}",
+                    method:"GET",
+                    beforeSend : function(xhr, settings){
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken)
+                    },success: function(response, status, error){
+                    console.log('***REPONSE***', response)
+                    response.data.forEach(function(record){
+                    var row =`<tr>
+                    <td>${record.id}</td>
+                    <td>${record.name}</td>
+                    <td>${record.email}</td>
+                    <td>${record.password}</td>
+                    <td>
+                          <a href="#" data-sid="${record.id}"  class="btn btn-warning btn-sm up_rec">EDIT</a>
+                          <a href="#"  data-sid="${record.id}"  class="btn btn-danger btn-sm del_rec ">DELETE</a>
+                         </td>
+                    </tr>`
+                    $('tbody').append(row)
+                    $("#stuid").val("")
+                
+                })
+                }
+                })
+                }
+                
+            })
+        }
+    })
+
+    $("body").on("click", ".del_rec" ,function(){
+        let ans = confirm("Confirm you want to delete this record")
+        console.log("delete", ans)
+
+        if(ans){
+            let id = $(this).attr("data-sid")
+        console.log(id)
+        let mythis = this
+        $.ajax({
+            url:"{% url 'student_delete_url' %}",
+            method:"POST",
+            data:{"sid":id},
+            beforeSend : function(xhr, settings){
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken)},
+            success:function(response, status){
+                $("#msg").text(response.msg)
+                $("#msg").show()
+                $(mythis).closest("tr").fadeOut();
+            }
+        })
+    } 
+        });
+
+    $("body").on("click", ".up_rec" ,function(){
+        console.log("edit")
+        let id = $(this).attr("data-sid")
+        console.log(id)
+        let mythis = this
+        $.ajax({
+            url:"{% url 'student_sp_retrieve_url' %}",
+            method:"GET",
+            data:{"sid":id},
+            beforeSend : function(xhr, settings){
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken)},
+            success:function(response){
+                console.log(response.data)
+                $("#stuid").val(response.data.id)
+                $("#nameid").val(response.data.name)
+                $("#emailid").val(response.data.email)
+                $("#passwordid").val(response.data.password)
+            }
+        })
+    });
+
+
+})
+
+</script>
